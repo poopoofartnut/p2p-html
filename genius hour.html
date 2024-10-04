@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@40,400,0,0" />
+    <script src="script.js"></script>
+    <title>chat</title>
+</head>
+<body>
+    <div id="chat">
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-self">
+            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
+        </div>
+        <div class="chat-other">
+            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
+        </div>
+        <div class="chat-sys">
+            <div class="chat-sys-bubble">Opened chat room</div>
+        </div>
+    </div>
+    <div id="message">
+        <input type="text" id="textbox" placeholder="Type something nigga...">
+        <button id="send"><span class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
+    </div>
+</body>
+</html>
+<style>
+/* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
+/** {
+  scrollbar-width: thin;
+  scrollbar-color: #004897 #CBCEEB;
+}*/
+
+/* Chrome, Edge and Safari */
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-track {
+  border-radius: 20px;
+  background-color: #CBCEEB;
+}
+
+*::-webkit-scrollbar-track:hover {
+  background-color: #CBCEEB;
+}
+
+*::-webkit-scrollbar-track:active {
+  background-color: #CBCEEB;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  background-color: #004897;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #004897;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: #004897;
+}
+
+body{
+    background-color: rgb(49, 49, 49);
+}
+.chat-self{
+    width: 100vw;
+    display: flex;
+    justify-content: right;
+}
+.chat-self-bubble{
+    color: white;
+    background-color: rgb(111, 111, 255);
+    max-width: 55%;
+    height: fit-content;
+    padding: 10px;
+    border-radius: 20px;
+    border-top-right-radius: 5px;
+    position: relative;
+    justify-self: right;
+    overflow-wrap: break-word;
+    margin: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.chat-other{
+    width: 100vw;
+    display: flex;
+    justify-content: left;
+}
+.chat-other-bubble{
+    color: white;
+    background-color: rgb(87, 87, 87);
+    max-width: 55%;
+    height: fit-content;
+    padding: 10px;
+    border-radius: 20px;
+    border-top-left-radius: 5px;
+    position: relative;
+    right: 0px;
+    justify-self: left;
+    overflow-wrap: break-word;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin: 10px;
+}
+#chat{
+    display: flex;
+    font-size: 13pt;
+    width: 100vw;
+    height: 90vh;
+    
+    overflow-y: scroll;
+    overflow-x: hidden;
+    flex-direction: column-reverse
+}
+.chat-sys{
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    color: rgb(138, 138, 138);
+    font-size: 11pt
+}
+.chat-sys-bubble{
+    padding: 10px;
+}
+#send{
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 100px;
+    background-color: rgb(111, 111, 255);
+    border: none;
+}
+#textbox{
+    background-color: rgb(87, 87, 87);
+    color:white;
+    border: none;
+    width: 85vw;
+    height: 40px;
+    margin-right:5px;
+    border-radius: 10px;
+    font-size: 14pt;
+    padding-left:10px;
+    padding-right:10px;
+    outline: none;
+}
+#message{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 10vh;
+}
+</style>
