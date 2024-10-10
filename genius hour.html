@@ -4,58 +4,181 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@40,400,0,0" />
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="script.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<body>
     <title>chat</title>
 </head>
 <body>
+  <button type="button" class="collapsible">Toggle logs</button>
+<div class="content">
+  <p id="status"></p>
+</div>
+
+    <div id="sendrecive"><h1>Send/Recive</h1><label class="switch">
+        <input type="checkbox">
+        <span class="slider round"></span>
+      </label></div>
     <div id="chat">
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-self">
-            <div class="chat-self-bubble">dsfhdskjfhsdsfkkkkkjksdhfksjdfhsdfhkdshfjksdkjdhf</div>
-        </div>
-        <div class="chat-other">
-            <div class="chat-other-bubble">dsfghfhgfhfhfghfhgfhfhgfhffhjfjhffhfhfhfhfjhfhdskjfhskjdhf</div>
-        </div>
-        <div class="chat-sys">
-            <div class="chat-sys-bubble">Opened chat room</div>
-        </div>
     </div>
     <div id="message">
-        <input type="text" id="textbox" placeholder="Type something nigga...">
-        <button id="send"><span class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
+        <input type="text" id="textbox" placeholder="Type something..." value=""></input>
+        <button id="send" onclick="pushh()"><span onclick="pushh()" class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
     </div>
+    <script>
+      $( ".collapsible" ).click(function() {
+    if (  $( this ).css( "transform" ) == 'none' ){
+        $(this).css("transform","translate(0px,200px)");
+        $(".content").css("transform","translate(0px,200px)");
+    } else {
+        $(this).css("transform","" );
+        $(".content").css("transform","" );
+    }
+});
+      function logg(skib){
+        var date = new Date();
+        var minute = date.getMinutes();
+        var hour = date.getHours();
+        var second = date.getSeconds();
+        var log = createElement("p");
+        log.innerHTML = "("+ hour +":"+ minute +":"+ second +")"+ skib;
+        document.getElementById("status").appendChild(log);
+      }
+      logg("test");
+      function initializeSend() {
+                    var satus = document.getElementById("status")
+                    // Create own peer object with connection to shared PeerJS server
+                    peer = new Peer(null, {
+                        debug: 2
+                    });
+
+                    peer.on('open', function (id) {
+                        // Workaround for peer.reconnect deleting previous id
+                        if (peer.id === null) {
+                            console.log('Received null id from peer open');
+                            peer.id = lastPeerId;
+                        } else {
+                            lastPeerId = peer.id;
+                        }
+
+                        console.log('ID: ' + peer.id);
+                    });
+                    peer.on('connection', function (c) {
+                        // Disallow incoming connections
+                        c.on('open', function() {
+                            c.send("Sender does not accept incoming connections");
+                            setTimeout(function() { c.close(); }, 500);
+                        });
+                    });
+                    peer.on('disconnected', function () {
+                        status.innerHTML = status.innerHTML +  "Connection lost. Please reconnect <br><br>";
+                        console.log('Connection lost. Please reconnect');
+
+                        // Workaround for peer.reconnect deleting previous id
+                        peer.id = lastPeerId;
+                        peer._lastServerId = lastPeerId;
+                        peer.reconnect();
+                    });
+                    peer.on('close', function() {
+                        conn = null;
+                        logg("Connection destroyed. Please refresh");
+                        console.log('Connection destroyed');
+                    });
+                    peer.on('error', function (err) {
+                        console.log(err);
+                        alert('' + err);
+                    });
+                };
+        function pushh(){
+            if(document.getElementById("textbox").value!=""){
+                const newMsgCont = document.createElement("div");
+                const newMsg = document.createElement("div");
+                newMsgCont.classList.add("chat-self");
+                newMsg.classList.add("chat-self-bubble");
+                newMsg.innerHTML=document.getElementById("textbox").value;
+                newMsgCont.appendChild(newMsg);
+                document.getElementById("chat").prepend(newMsgCont);
+                document.getElementById("textbox").value="";
+            }
+        };
+        
+initializeSend();
+    </script>
 </body>
 </html>
 <style>
+#sendrecive{
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: black;
+    border-bottom-left-radius: 20px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+    .switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: rgb(111, 111, 255);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px rgb(111, 111, 255);
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
 /* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
 /** {
   scrollbar-width: thin;
@@ -82,19 +205,22 @@
 
 *::-webkit-scrollbar-thumb {
   border-radius: 20px;
-  background-color: #004897;
+  background-color: rgb(111, 111, 255);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #004897;
+  background-color: rgb(111, 111, 255);
 }
 
 *::-webkit-scrollbar-thumb:active {
-  background-color: #004897;
+  background-color: rgb(111, 111, 255);
 }
 
 body{
     background-color: rgb(49, 49, 49);
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
 }
 .chat-self{
     width: 100vw;
@@ -164,6 +290,7 @@ body{
     border-radius: 100px;
     background-color: rgb(111, 111, 255);
     border: none;
+    cursor: pointer;
 }
 #textbox{
     background-color: rgb(87, 87, 87);
@@ -183,5 +310,34 @@ body{
     align-items: center;
     justify-content: center;
     height: 10vh;
+}
+.collapsible {
+  background-color: #777;
+  color: white;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  cursor: pointer;
+  width: 200px;
+  height: 20px;
+  border: none;
+  text-align: center;
+  outline: none;
+  font-size: 15px;
+  position: fixed;
+  top: 0;
+  left: 5px;
+  transition: 0.5s ease-in-out;
+}
+
+.content {
+  padding: 0 18px;
+  overflow: scroll;
+  background-color: #505050;
+  width: 164px;
+  height: 200px;
+  position: fixed;
+  top: -200px;
+  left: 5px;
+  transition: 0.5s ease-in-out;
 }
 </style>
