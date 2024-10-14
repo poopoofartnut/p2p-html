@@ -58,7 +58,7 @@
                 conn = incomingConn;  // Store the incoming connection globally
                 setupConnectionHandlers(conn);
             });
-    
+     
             peer.on('disconnected', function() {
                 displayMessage("Connection lost", 'system');
                 logg('Connection lost. Please reconnect');
@@ -266,6 +266,7 @@ body{
   top: 0;
   left: 5px;
   transition: 0.5s ease-in-out;
+  z-index: 1000000000000000000;
 }
 
 .content {
@@ -281,6 +282,7 @@ body{
   transition: 0.5s ease-in-out;
   display: flex;
   flex-direction: column;
+  z-index: 100000000000000000000;
 }
 /* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
 /** {
