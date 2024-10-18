@@ -18,12 +18,13 @@
     <div id="chat">
     </div>
     <div id="message"> 
-        <input type="text" id="textbox" placeholder="Type something..." value=""></input>
+        <input type="text" class="textbox" placeholder="Type something..." value=""></input>
         <button id="send" onclick="pushh()"><span onclick="pushh()" class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
     </div>
     <div id="overlay">
         <div id="user">
-            <button onclick="initializePeer();">Done</button>
+            <input type="text" class="textbox" placeholder="Username" value=""></input>
+            <button class="done" onclick="initializePeer();">Done</button>
         </div>
     </div>
     <script>
@@ -53,7 +54,8 @@
     
         // Initialize peer for sending and receiving messages
         function initializePeer() {
-            peer = new Peer(null, { debug: 2 });
+            document.getElementById("overlay").innerHTML="<h1>Loading...</h1>";
+            peer = new Peer(null, { debug: 2 }); 
     
             peer.on('open', function(id) {
                 logg('Peer ID: ' + (peer.id || lastPeerId));
@@ -154,7 +156,6 @@
             document.getElementById("chat").prepend(newMsgCont);
         }
     
-        // Initialize the peer object and start listening for connections
         
     </script>
     
@@ -162,7 +163,9 @@
 </body>
 </html>
 <style>
-
+h1{
+    font-size: 20pt;
+}
 body{
     background-color: rgb(49, 49, 49);
     color: white;
@@ -230,6 +233,7 @@ body{
     justify-content: center;
     color: rgb(138, 138, 138);
     font-size: 11pt
+    
 }
 .chat-sys-bubble{
     padding: 10px;
@@ -243,11 +247,11 @@ body{
     border: none;
     cursor: pointer;
 }
-#textbox{
+.textbox{
     background-color: rgb(87, 87, 87);
     color:white;
     border: none;
-    width: 80vw;
+    width: 80%;
     height: 40px;
     margin-right:5px;
     border-radius: 10px;
@@ -283,11 +287,12 @@ body{
 
 .content {
   padding: 0 18px;
+  padding-top: 10px;
   overflow-y: scroll;
   overflow-x: hidden;
   background-color: #505050;
   width: 164px;
-  height: 200px;
+  height: 190px;
   position: fixed;
   top: -200px;
   left: 5px;
@@ -346,10 +351,25 @@ body{
     justify-content: center;
 }
 #user{
-    background-color: #505050;
+    background-color: #303030;
     width: 70vw;
     height: 60vh;
     border-radius: 50px;
     padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.done{
+    border-radius: 10px;
+    width: 120px;
+    height: 40px;
+    background-color: rgb(87, 87, 87);
+    border: none;
+    color: white;
+    font-size: 13pt;
+    cursor: pointer;
+    margin-top: 20px;
 }
 </style>
