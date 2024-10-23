@@ -31,7 +31,7 @@
     <script>
 var otheruserpack;
 let conn = null;
-var skib = 0;
+var skib = false;
 var userpacket = {
     "username": "",
     "publicKey": ""
@@ -133,18 +133,12 @@ function setupConnectionHandlers(connection) {
     });
 
     connection.on('data', function (data) {
-        if (skib == 0) {
-            skib++;
-            connectToPeer(message);
-            
-        } else if (skib == 1) {
-            skib++;
+        if (skib == false) {
+            skib = true;
             otheruserpack = data;
-        }else{
-            {
+        } else {
             logg('Received message: ' + data);  // Log the received message
             displayMessage(data, 'other');      // Display the received message in the chat
-        }
         }
     });
 
@@ -173,7 +167,7 @@ function pushh() {
         conn.send(messageToSend); // Send message to peer
         displayMessage(messageToSend, 'self'); // Display your own message with username
     } else if (message != "") {
-        
+        connectToPeer(message);
     }
     document.getElementById("textbox").value = ""; // Clear input
 }
