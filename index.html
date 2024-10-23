@@ -127,9 +127,9 @@ function initializePeer() {
 function setupConnectionHandlers(connection) {
     connection.on('open', function () {
         conn.send(userpacket);
-        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
-        displayMessage('Connected to peer: ' + connection.peer, 'system');
         listenForMessages(); // Start listening for incoming messages
+        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
+        displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'system');
     });
 
     connection.on('data', function (data) {
