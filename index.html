@@ -18,18 +18,41 @@
     <div id="chat">
     </div>
     <div id="message"> 
-        <input type="text" class="textbox" placeholder="Type something..." value=""></input>
+        <input type="text" class="textbox" autocomplete="off" placeholder="Type something..." id="textbox"></input>
         <button id="send" onclick="pushh()"><span onclick="pushh()" class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
     </div>
-    <div id="overlay">
+    <div id="overlay"> 
         <div id="user">
-            <input type="text" class="textbox" placeholder="Username" value=""></input>
+            <h1 style="padding: 10px;position: relative;top: -20%;">Encrypted Peer-to-peer messageing</h1>
+            <input id="username" type="text" class="textbox" placeholder="Username" value=""></input>
             <button class="done" onclick="initializePeer();">Done</button>
         </div>
     </div>
     <script>
-        var userpacket={
 
+let conn = null;
+        var userpacket={
+            "username": "",
+            "publicKey": ""
+        }
+        function generateKeypair () {
+        crypt = new JSEncrypt({default_key_size: 2056})
+        privateKey = crypt.getPrivateKey()
+
+        // Only return the public key, keep the private key hidden
+        return crypt.getPublicKey()
+        }
+
+        /** Encrypt the provided string with the destination public key */
+        function encrypt (content, publicKey) {
+        crypt.setKey(publicKey)
+        return crypt.encrypt(content)
+        }
+
+        /** Decrypt the provided string with the local private key */
+        function decrypt (content) {
+        crypt.setKey(privateKey)
+        return crypt.decrypt(content)
         }
                 document.querySelector('#textbox').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -54,6 +77,7 @@
     
         // Initialize peer for sending and receiving messages
         function initializePeer() {
+            userpacket[username] = document.getElementById("username").value;
             document.getElementById("overlay").innerHTML="<h1>Loading...</h1>";
             peer = new Peer(null, { debug: 2 }); 
     
@@ -63,6 +87,10 @@
                 displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'system');
                 if (peer.id === null) peer.id = lastPeerId; // Handle null peer ID
                 $("#overlay").css("display","none");
+                $("#overlay").css("position","fixed");
+                $("#overlay").css("left","-70000px");
+                $("#overlay").css("top","-70000px");
+                $("#overlay").css("z-index","-100");
             });
     
             // Handle incoming connections from remote peers
@@ -89,12 +117,12 @@
                 logg('Error: ' + err);
             });
         }
-    
-        let conn = null; // Store the data connection object globally
+ // Store the data connection object globally
     
         // Set up handlers for an active connection
         function setupConnectionHandlers(connection) {
             connection.on('open', function() {
+                conn.send(userpacket);
                 logg('Connection established with peer: ' + connection.peer);
                 displayMessage('Connected to peer: ' + connection.peer, 'system');
                 listenForMessages(); // Start listening for incoming messages
@@ -122,15 +150,15 @@
             conn = peer.connect(remotePeerId);
             setupConnectionHandlers(conn);  // Reuse the same connection handler
         }
-    
         // Send a message to the connected peer
         function pushh() {
             const message = document.getElementById("textbox").value;
-            if (message !== "" && conn && conn.open) {
+            if (message != "" && conn && conn.open) {
                 conn.send(message); // Send message to peer
                 displayMessage(message, 'self'); // Display your own message
-            }else if(message !== ""){
+            }else if(message != ""){
                 connectToPeer(message)
+            }else{
             }
             document.getElementById("textbox").value = ""; // Clear input
         }
