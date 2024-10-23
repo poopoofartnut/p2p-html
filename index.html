@@ -29,8 +29,9 @@
         </div>
     </div>
     <script>
-
+var otheruserpack;
 let conn = null;
+var skib = false;
         var userpacket={
             "username": "",
             "publicKey": ""
@@ -123,15 +124,21 @@ let conn = null;
         function setupConnectionHandlers(connection) {
             connection.on('open', function() {
                 conn.send(userpacket);
-                logg('Connection established with peer: ' + connection.peer);
+                logg('Connection established with peer: '+ otheruserpack[username] + '('+connection.peer+')');
                 displayMessage('Connected to peer: ' + connection.peer, 'system');
                 listenForMessages(); // Start listening for incoming messages
                 conn.send()
             });
     
             connection.on('data', function(data) {
+                if(skib==false){
+                    skib=true;
+                    otheruserpack = data;
+                }else{
                 logg('Received message: ' + data);  // Log the received message
-                displayMessage(data, 'other');      // Display the received message in the chat
+                displayMessage(data, 'other');
+            }
+                      // Display the received message in the chat
             });
     
             connection.on('error', function(err) {
