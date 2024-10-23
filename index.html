@@ -8,413 +8,411 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.0.0/jsencrypt.min.js"></script>
-<body>
-    <title>chat</title>
+    <title>Encrypted P2P Chat</title>
 </head>
 <body>
   <button type="button" class="collapsible">Toggle logs</button>
-  
-<div class="content" id="content">
-</div>
-    <div id="chat">
-    </div>
-    <div id="message"> 
-        <input type="text" class="textbox" autocomplete="off" placeholder="Type something..." id="textbox"></input>
-        <button id="send" onclick="pushh()"><span onclick="pushh()" class="material-symbols-outlined" style="position: relative;left: 2px;bottom: -2px;">send</span></button>
-    </div>
-    <div id="overlay"> 
-        <div id="user">
-            <h1 style="padding: 10px;position: relative;top: -20%;">Encrypted Peer-to-peer messageing</h1>
-            <input id="username" type="text" class="textbox" placeholder="Username" value=""></input>
-            <button class="done" onclick="initializePeer();">Done</button>
-        </div>
-    </div>
-    <script>
-var otheruserpack;
-let conn = null;
-var skib = false;
-var userpacket = {
-    "username": "",
-    "publicKey": ""
-}
 
-// Initialize crypt object outside functions to be reused
-var crypt;
-var privateKey;
-var publicKey;
+  <div class="content" id="content">
+  </div>
 
-/** Generate RSA key pair and return the public key */
-function generateKeypair() {
-    crypt = new JSEncrypt({ default_key_size: 2048 });
-    privateKey = crypt.getPrivateKey();  // Save private key
-    publicKey = crypt.getPublicKey();  // Return public key
-    return publicKey;
-}
+  <div id="chat">
+  </div>
+  <div id="message"> 
+      <input type="text" class="textbox" autocomplete="off" placeholder="Type something..." id="textbox">
+      <button id="send" onclick="pushh()"><span class="material-symbols-outlined">send</span></button>
+  </div>
+  <div id="overlay"> 
+      <div id="user">
+          <h1>Encrypted Peer-to-peer Messaging</h1>
+          <input id="username" type="text" class="textbox" placeholder="Username" value="">
+          <button class="done" onclick="initializePeer();">Start Chatting</button>
+      </div>
+  </div>
 
-/** Encrypt the provided string with the destination public key */
-function encrypt(content, recipientPublicKey) {
-    var encryptor = new JSEncrypt();
-    encryptor.setPublicKey(recipientPublicKey);
-    return encryptor.encrypt(content);
-}
-
-/** Decrypt the provided string with the local private key */
-function decrypt(content) {
-    crypt.setPrivateKey(privateKey);  // Set private key for decryption
-    return crypt.decrypt(content);
-}
-
-// Listen for Enter key press to send messages
-document.querySelector('#textbox').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        pushh();
+  <script>
+    var otheruserpack;
+    let conn = null;
+    var skib = false;
+    var userpacket = {
+        "username": "",
+        "publicKey": ""
     }
-});
 
-// Toggle log visibility
-$(".collapsible").click(function () {
-    const isTransformed = $(this).css("transform") !== 'none';
-    $(this).css("transform", isTransformed ? "" : "translate(0px, 200px)");
-    $(".content").css("transform", isTransformed ? "" : "translate(0px, 200px)");
-});
+    var crypt;
+    var privateKey;
+    var publicKey;
 
-// Log messages with timestamp
-function logg(message) {
-    const date = new Date();
-    const timeString = `<pp style="color:rgb(160, 160, 160)">(${date.getHours()}:${date.getMinutes()}:${date.getSeconds()})</pp> ${message}`;
-    const log = document.createElement("p");
-    log.innerHTML = timeString;
-    document.getElementById("content").prepend(log);
-}
+    function generateKeypair() {
+        try {
+            crypt = new JSEncrypt({ default_key_size: 2048 });
+            privateKey = crypt.getPrivateKey();
+            publicKey = crypt.getPublicKey();
+            return publicKey;
+        } catch (error) {
+            logg('Error generating keypair: ' + error.message);
+            displayMessage('Error generating encryption keys. Please refresh and try again.', 'sys');
+            return null;
+        }
+    }
 
-// Initialize peer for sending and receiving messages
-function initializePeer() {
-    userpacket.username = document.getElementById("username").value; // Capture the username here
-    document.getElementById("overlay").innerHTML = "<h1>Loading...</h1>";
-    peer = new Peer(null, { debug: 2 });
+    function encrypt(content, recipientPublicKey) {
+        try {
+            var encryptor = new JSEncrypt();
+            encryptor.setPublicKey(recipientPublicKey);
+            return encryptor.encrypt(content);
+        } catch (error) {
+            logg('Error encrypting message: ' + error.message);
+            displayMessage('Error encrypting message. It was not sent.', 'sys');
+            return null;
+        }
+    }
 
-    peer.on('open', function (id) {
-        logg('Peer ID: ' + (peer.id || lastPeerId));
-        displayMessage('Your peer ID: ' + (peer.id || lastPeerId), 'system');
-        displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'system');
-        if (peer.id === null) peer.id = lastPeerId; // Handle null peer ID
-        $("#overlay").css("display", "none");
-        $("#overlay").css("position", "fixed");
-        $("#overlay").css("left", "-70000px");
-        $("#overlay").css("top", "-70000px");
-        $("#overlay").css("z-index", "-100");
+    function decrypt(content) {
+        try {
+            crypt.setPrivateKey(privateKey);
+            return crypt.decrypt(content);
+        } catch (error) {
+            logg('Error decrypting message: ' + error.message);
+            displayMessage('Error decrypting message. It could not be displayed.', 'sys');
+            return null;
+        }
+    }
+
+    document.querySelector('#textbox').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            pushh();
+        }
     });
 
-    // Handle incoming connections from remote peers
-    peer.on('connection', function (incomingConn) {
-        logg('Incoming connection from peer: ' + incomingConn.peer);
-        conn = incomingConn;  // Store the incoming connection globally
+    $(".collapsible").click(function () {
+        const isTransformed = $(this).css("transform") !== 'none';
+        $(this).css("transform", isTransformed ? "" : "translate(0px, 200px)");
+        $(".content").css("transform", isTransformed ? "" : "translate(0px, 200px)");
+    });
+
+    function logg(message) {
+        const date = new Date();
+        const timeString = `<span class="log-time">(${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')})</span> ${message}`;
+        const log = document.createElement("p");
+        log.innerHTML = timeString;
+        document.getElementById("content").prepend(log);
+    }
+
+    function initializePeer() {
+        const username = document.getElementById("username").value.trim();
+        if (!username) {
+            alert("Please enter a username.");
+            return;
+        }
+        userpacket.username = username;
+        document.getElementById("overlay").innerHTML = "<h1>Connecting...</h1>";
+        peer = new Peer(null, { debug: 2 });
+
+        peer.on('open', function (id) {
+            logg('Peer ID: ' + (peer.id || lastPeerId));
+            displayMessage('Your peer ID: ' + (peer.id || lastPeerId), 'sys');
+            displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'sys');
+            if (peer.id === null) peer.id = lastPeerId;
+            $("#overlay").hide();
+        });
+
+        peer.on('connection', function (incomingConn) {
+            logg('Incoming connection from peer: ' + incomingConn.peer);
+            conn = incomingConn;
+            setupConnectionHandlers(conn);
+        });
+
+        peer.on('disconnected', function () {
+            displayMessage("Connection lost. Attempting to reconnect...", 'sys');
+            logg('Connection lost. Attempting to reconnect...');
+            peer.id = lastPeerId;
+            peer.reconnect();
+        });
+
+        peer.on('close', function () {
+            displayMessage('Connection destroyed. Please refresh the page.', 'sys');
+            logg("Connection destroyed. Please refresh the page.");
+        });
+
+        peer.on('error', function (err) {
+            displayMessage('Error occurred: ' + err.type, 'sys');
+            logg('Error: ' + err.type);
+        });
+    }
+
+    function setupConnectionHandlers(connection) {
+        connection.on('open', function () {
+            userpacket.publicKey = generateKeypair();
+            if (userpacket.publicKey) {
+                conn.send(userpacket);
+            } else {
+                displayMessage('Failed to generate encryption keys. Connection aborted.', 'sys');
+                connection.close();
+            }
+        });
+
+        connection.on('data', function (data) {
+            if (!skib) {
+                skib = true;
+                otheruserpack = data;
+                logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
+                displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'sys');
+            } else {
+                const decryptedMessage = decrypt(data);
+                if (decryptedMessage) {
+                    logg('Received message: ' + decryptedMessage);
+                    displayMessage(decryptedMessage, 'other');
+                }
+            }
+        });
+
+        connection.on('error', function (err) {
+            logg('Connection error: ' + err);
+            displayMessage('Connection error: ' + err, 'sys');
+        });
+
+        connection.on('close', function () {
+            logg('Connection closed with peer: ' + connection.peer);
+            displayMessage('Connection closed with peer: ' + connection.peer, 'sys');
+            skib = false;
+            conn = null;
+        });
+    }
+
+    function connectToPeer(remotePeerId) {
+        if (conn) {
+            displayMessage('You are already connected to a peer. Please disconnect first.', 'sys');
+            return;
+        }
+        conn = peer.connect(remotePeerId);
         setupConnectionHandlers(conn);
-    });
-
-    peer.on('disconnected', function () {
-        displayMessage("Connection lost", 'system');
-        logg('Connection lost. Please reconnect');
-        peer.id = lastPeerId;
-        peer.reconnect();
-    });
-
-    peer.on('close', function () {
-        displayMessage('Connection destroyed', 'system');
-        logg("Connection destroyed. Please refresh");
-    });
-
-    peer.on('error', function (err) {
-        displayMessage('Error occurred, check logs', 'system');
-        logg('Error: ' + err);
-    });
-}
-
-// Set up handlers for an active connection
-function setupConnectionHandlers(connection) {
-    connection.on('open', function () {
-    userpacket.publicKey = generateKeypair(); // Generate keypair and attach public key
-    conn.send(userpacket); // Send user packet including the public key
-});
-
-
-    connection.on('data', function (data) {
-    if (skib == false) {
-        skib = true;
-        otheruserpack = data;
-        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
-        displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'system');
-    } else {
-        const decryptedMessage = decrypt(data);  // Decrypt incoming message
-        logg('Received message: ' + decryptedMessage);  // Log decrypted message
-        displayMessage(decryptedMessage, 'other');      // Display the decrypted message in the chat
-    }
-});
-
-
-    connection.on('error', function (err) {
-        logg('Connection error: ' + err);
-        displayMessage('Error occurred, check logs', 'system');
-    });
-
-    connection.on('close', function () {
-        logg('Connection closed with peer: ' + connection.peer);
-        displayMessage('Connection closed with peer: ' + connection.peer, 'system');
-    });
-}
-
-// Manually connect to a peer with the specified remote peer ID
-function connectToPeer(remotePeerId) {
-    conn = peer.connect(remotePeerId);
-    setupConnectionHandlers(conn);  // Reuse the same connection handler
-}
-
-function pushh() {
-    const message = document.getElementById("textbox").value;
-    if (message != "" && conn && conn.open) {
-        const encryptedMessage = encrypt(message, otheruserpack.publicKey); // Encrypt message
-        conn.send(encryptedMessage); // Send encrypted message to peer
-        displayMessage(message, 'self'); // Display unencrypted message locally
-    } else if (message != "") {
-        connectToPeer(message);
-    }
-    document.getElementById("textbox").value = ""; // Clear input
-}
-
-// Display messages in the chat UI
-function displayMessage(message, type) {
-    const newMsgCont = document.createElement("div");
-    const newMsg = document.createElement("div");
-
-    if (type === 'self') {
-        newMsgCont.classList.add("chat-self");
-        newMsg.classList.add("chat-self-bubble");
-    } else if (type === 'other') {
-        newMsgCont.classList.add("chat-other");
-        newMsg.classList.add("chat-other-bubble");
-    } else if (type === 'system') {
-        newMsgCont.classList.add("chat-sys");
-        newMsg.classList.add("chat-sys-bubble");
     }
 
-    newMsg.innerHTML = DOMPurify.sanitize(message); // Ensure messages are sanitized
-    newMsgCont.appendChild(newMsg);
-    document.getElementById("chat").prepend(newMsgCont);
-}
+    function pushh() {
+        const message = document.getElementById("textbox").value.trim();
+        if (message === "") return;
 
-    </script>
-    
-  
+        if (conn && conn.open) {
+            const encryptedMessage = encrypt(message, otheruserpack.publicKey);
+            if (encryptedMessage) {
+                conn.send(encryptedMessage);
+                displayMessage(message, 'self');
+            }
+        } else if (!conn) {
+            connectToPeer(message);
+        } else {
+            displayMessage('Connection not open. Message not sent.', 'sys');
+        }
+        document.getElementById("textbox").value = "";
+    }
+
+    function displayMessage(message, type) {
+        const newMsgCont = document.createElement("div");
+        const newMsg = document.createElement("div");
+
+        newMsgCont.classList.add("chat-" + type);
+        newMsg.classList.add("chat-" + type + "-bubble");
+
+        newMsg.innerHTML = DOMPurify.sanitize(message);
+        newMsgCont.appendChild(newMsg);
+        document.getElementById("chat").prepend(newMsgCont);
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-color: #1e1e1e;
+      --text-color: #e0e0e0;
+      --primary-color: #4a4aff;
+      --secondary-color: #2c2c2c;
+      --tertiary-color: #3a3a3a;
+      --system-message-color: #a0a0a0;
+      --scrollbar-thumb-color: #555555;
+      --scrollbar-thumb-hover-color: #777777;
+    }
+
+    body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h1 {
+        font-size: 24px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    #chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+
+    .chat-self, .chat-other, .chat-sys {
+        margin-bottom: 10px;
+        max-width: 70%;
+    }
+
+    .chat-self {
+        align-self: flex-end;
+    }
+
+    .chat-other {
+        align-self: flex-start;
+    }
+
+    .chat-sys {
+        align-self: center;
+    }
+
+    .chat-self-bubble {
+        background-color: var(--primary-color);
+        color: var(--bg-color);
+        padding: 10px;
+        border-radius: 20px;
+        border-bottom-right-radius: 5px;
+    }
+
+    .chat-other-bubble {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        padding: 10px;
+        border-radius: 20px;
+        border-bottom-left-radius: 5px;
+    }
+
+    .chat-sys-bubble {
+        background-color: var(--tertiary-color);
+        color: var(--system-message-color);
+        padding: 5px 10px;
+        border-radius: 10px;
+        font-size: 0.9em;
+    }
+
+    #message {
+        display: flex;
+        padding: 20px;
+        background-color: var(--tertiary-color);
+    }
+
+    .textbox {
+        flex: 1;
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 10px;
+        border-radius: 20px;
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    #send {
+        background-color: var(--primary-color);
+        color: var(--text-color);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .collapsible {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 10px;
+        width: 200px;
+        text-align: center;
+        cursor: pointer;
+        position: fixed;
+        top: 0;
+        left: 20px;
+        z-index: 10;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        transition: 0.5s ease-in-out;
+    }
+
+    .content {
+        background-color: var(--tertiary-color);
+        padding: 10px;
+        width: 180px;
+        height: 200px;
+        position: fixed;
+        top: -220px;
+        left: 20px;
+        transition: 0.3s;
+        overflow-y: auto;
+        z-index: 9;
+        transition: 0.5s ease-in-out;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+    }
+
+    #user {
+        background-color: var(--tertiary-color);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    .done {
+        background-color: var(--primary-color);
+        color: var(--text-color);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+
+    .log-time {
+        color: var(--system-message-color);
+        font-size: 0.8em;
+    }
+
+    /* Scrollbar Styles */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb-color);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover-color);
+    }
+  </style>
 </body>
 </html>
-<style>
-h1{
-    font-size: 20pt;
-}
-body{
-    background-color: rgb(49, 49, 49);
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-    overflow-x: hidden;
-    height: 100vh;
-    padding: 0;
-    border: none;
-    margin: 0px;
-}
-.chat-self{
-    width: 100vw;
-    display: flex;
-    justify-content: right;
-}
-.chat-self-bubble{
-    color: white;
-    background-color: rgb(111, 111, 255);
-    max-width: 55%;
-    height: fit-content;
-    padding: 10px;
-    border-radius: 20px;
-    border-top-right-radius: 5px;
-    position: relative;
-    justify-self: right;
-    overflow-wrap: break-word;
-    margin: 10px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-.chat-other{
-    width: 100vw;
-    display: flex;
-    justify-content: left;
-}
-.chat-other-bubble{
-    color: white;
-    background-color: rgb(87, 87, 87);
-    max-width: 55%;
-    height: fit-content;
-    padding: 10px;
-    border-radius: 20px;
-    border-top-left-radius: 5px;
-    position: relative;
-    right: 0px;
-    justify-self: left;
-    overflow-wrap: break-word;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    margin: 10px;
-}
-#chat{
-    display: flex;
-    font-size: 13pt;
-    width: 100vw;
-    height: 90vh;
-    
-    overflow-y: scroll;
-    overflow-x: hidden;
-    flex-direction: column-reverse
-}
-.chat-sys{
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    color: rgb(138, 138, 138);
-    font-size: 11pt
-    
-}
-.chat-sys-bubble{
-    padding: 10px;
-}
-#send{
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 100px;
-    background-color: rgb(111, 111, 255);
-    border: none;
-    cursor: pointer;
-}
-.textbox{
-    background-color: rgb(87, 87, 87);
-    color:white;
-    border: none;
-    width: 80%;
-    height: 40px;
-    margin-right:5px;
-    border-radius: 10px;
-    font-size: 14pt;
-    padding-left:10px;
-    padding-right:10px;
-    outline: none;
-}
-#message{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 10vh;
-}
-.collapsible {
-  background-color: #676767;
-  color: white;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  cursor: pointer;
-  width: 200px;
-  height: 20px;
-  border: none;
-  text-align: center;
-  outline: none;
-  font-size: 15px;
-  position: fixed;
-  top: 0;
-  left: 5px;
-  transition: 0.5s ease-in-out;
-  z-index: 10;
-}
-
-.content {
-  padding: 0 18px;
-  padding-top: 10px;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  background-color: #505050;
-  width: 164px;
-  height: 190px;
-  position: fixed;
-  top: -200px;
-  left: 5px;
-  transition: 0.5s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  z-index: 10;
-}
-/* Firefox (uncomment to work in Firefox, although other properties will not work!)  */
-/** {
-  scrollbar-width: thin;
-  scrollbar-color: #B1B1B1 #FFFFFF;
-}*/
-
-/* Chrome, Edge and Safari */
-*::-webkit-scrollbar {
-  height: 3px;
-  width: 3px;
-}
-*::-webkit-scrollbar-track {
-  border-radius: 0px;
-  background-color: #FFFFFF00;
-}
-
-*::-webkit-scrollbar-track:hover {
-  background-color: #FFFFFF00;
-}
-
-*::-webkit-scrollbar-track:active {
-  background-color: #ffffff00;
-}
-
-*::-webkit-scrollbar-thumb {
-  border-radius: 20px;
-  background-color: #B1B1B1;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background-color: #B1B1B1;
-}
-
-*::-webkit-scrollbar-thumb:active {
-  background-color: #B1B1B1;
-}
-#overlay{
-    background-color: rgba(0, 0, 0, 0.621);
-    border: none;
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-#user{
-    background-color: #303030;
-    width: 70vw;
-    height: 60vh;
-    border-radius: 50px;
-    padding: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-}
-.done{
-    border-radius: 10px;
-    width: 120px;
-    height: 40px;
-    background-color: rgb(87, 87, 87);
-    border: none;
-    color: white;
-    font-size: 13pt;
-    cursor: pointer;
-    margin-top: 20px;
-}
-</style>
