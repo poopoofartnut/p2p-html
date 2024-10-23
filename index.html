@@ -31,7 +31,7 @@
     <script>
 var otheruserpack;
 let conn = null;
-var skib = false;
+var skib = 0;
 var userpacket = {
     "username": "",
     "publicKey": ""
@@ -135,10 +135,11 @@ function setupConnectionHandlers(connection) {
     connection.on('data', function (data) {
         if (skib == 0) {
             skib++;
-            otheruserpack = data;
+            connectToPeer(message);
+            
         } else if (skib == 1) {
             skib++;
-            connectToPeer(message);
+            otheruserpack = data;
         }else{
             {
             logg('Received message: ' + data);  // Log the received message
