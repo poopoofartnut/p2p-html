@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@40,400,0,0" />
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.0.0/jsencrypt.min.js"></script>
 <body>
     <title>chat</title>
 </head>
@@ -37,23 +37,29 @@ var userpacket = {
     "publicKey": ""
 }
 
-function generateKeypair() {
-    crypt = new JSEncrypt({ default_key_size: 2056 });
-    privateKey = crypt.getPrivateKey();
+// Initialize crypt object outside functions to be reused
+var crypt;
+var privateKey;
+var publicKey;
 
-    // Only return the public key, keep the private key hidden
-    return crypt.getPublicKey();
+/** Generate RSA key pair and return the public key */
+function generateKeypair() {
+    crypt = new JSEncrypt({ default_key_size: 2048 });
+    privateKey = crypt.getPrivateKey();  // Save private key
+    publicKey = crypt.getPublicKey();  // Return public key
+    return publicKey;
 }
 
 /** Encrypt the provided string with the destination public key */
-function encrypt(content, publicKey) {
-    crypt.setKey(publicKey);
-    return crypt.encrypt(content);
+function encrypt(content, recipientPublicKey) {
+    var encryptor = new JSEncrypt();
+    encryptor.setPublicKey(recipientPublicKey);
+    return encryptor.encrypt(content);
 }
 
 /** Decrypt the provided string with the local private key */
 function decrypt(content) {
-    crypt.setKey(privateKey);
+    crypt.setPrivateKey(privateKey);  // Set private key for decryption
     return crypt.decrypt(content);
 }
 
@@ -126,20 +132,24 @@ function initializePeer() {
 // Set up handlers for an active connection
 function setupConnectionHandlers(connection) {
     connection.on('open', function () {
-        conn.send(userpacket);
-    });
+    userpacket.publicKey = generateKeypair(); // Generate keypair and attach public key
+    conn.send(userpacket); // Send user packet including the public key
+});
+
 
     connection.on('data', function (data) {
-        if (skib == false) {
-            skib = true;
-            otheruserpack = data;
-            logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
+    if (skib == false) {
+        skib = true;
+        otheruserpack = data;
+        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
         displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'system');
-        } else {
-            logg('Received message: ' + data);  // Log the received message
-            displayMessage(data, 'other');      // Display the received message in the chat
-        }
-    });
+    } else {
+        const decryptedMessage = decrypt(data);  // Decrypt incoming message
+        logg('Received message: ' + decryptedMessage);  // Log decrypted message
+        displayMessage(decryptedMessage, 'other');      // Display the decrypted message in the chat
+    }
+});
+
 
     connection.on('error', function (err) {
         logg('Connection error: ' + err);
@@ -158,13 +168,12 @@ function connectToPeer(remotePeerId) {
     setupConnectionHandlers(conn);  // Reuse the same connection handler
 }
 
-// Send a message to the connected peer
 function pushh() {
     const message = document.getElementById("textbox").value;
     if (message != "" && conn && conn.open) {
-        const messageToSend = userpacket.username + ": " + message; // Add username before the message
-        conn.send(messageToSend); // Send message to peer
-        displayMessage(messageToSend, 'self'); // Display your own message with username
+        const encryptedMessage = encrypt(message, otheruserpack.publicKey); // Encrypt message
+        conn.send(encryptedMessage); // Send encrypted message to peer
+        displayMessage(message, 'self'); // Display unencrypted message locally
     } else if (message != "") {
         connectToPeer(message);
     }
