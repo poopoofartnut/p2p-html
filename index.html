@@ -133,12 +133,17 @@ function setupConnectionHandlers(connection) {
     });
 
     connection.on('data', function (data) {
-        if (skib == false) {
-            skib = true;
+        if (skib == 0) {
+            skib++;
             otheruserpack = data;
-        } else {
+        } else if (skib == 1) {
+            skib++;
+            connectToPeer(message);
+        }else{
+            {
             logg('Received message: ' + data);  // Log the received message
             displayMessage(data, 'other');      // Display the received message in the chat
+        }
         }
     });
 
@@ -167,7 +172,7 @@ function pushh() {
         conn.send(messageToSend); // Send message to peer
         displayMessage(messageToSend, 'self'); // Display your own message with username
     } else if (message != "") {
-        connectToPeer(message);
+        
     }
     document.getElementById("textbox").value = ""; // Clear input
 }
