@@ -32,166 +32,167 @@
 var otheruserpack;
 let conn = null;
 var skib = false;
-        var userpacket={
-            "username": "",
-            "publicKey": ""
-        }
-        function generateKeypair () {
-        crypt = new JSEncrypt({default_key_size: 2056})
-        privateKey = crypt.getPrivateKey()
+var userpacket = {
+    "username": "",
+    "publicKey": ""
+}
 
-        // Only return the public key, keep the private key hidden
-        return crypt.getPublicKey()
-        }
+function generateKeypair() {
+    crypt = new JSEncrypt({ default_key_size: 2056 });
+    privateKey = crypt.getPrivateKey();
 
-        /** Encrypt the provided string with the destination public key */
-        function encrypt (content, publicKey) {
-        crypt.setKey(publicKey)
-        return crypt.encrypt(content)
-        }
+    // Only return the public key, keep the private key hidden
+    return crypt.getPublicKey();
+}
 
-        /** Decrypt the provided string with the local private key */
-        function decrypt (content) {
-        crypt.setKey(privateKey)
-        return crypt.decrypt(content)
+/** Encrypt the provided string with the destination public key */
+function encrypt(content, publicKey) {
+    crypt.setKey(publicKey);
+    return crypt.encrypt(content);
+}
+
+/** Decrypt the provided string with the local private key */
+function decrypt(content) {
+    crypt.setKey(privateKey);
+    return crypt.decrypt(content);
+}
+
+// Listen for Enter key press to send messages
+document.querySelector('#textbox').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        pushh();
+    }
+});
+
+// Toggle log visibility
+$(".collapsible").click(function () {
+    const isTransformed = $(this).css("transform") !== 'none';
+    $(this).css("transform", isTransformed ? "" : "translate(0px, 200px)");
+    $(".content").css("transform", isTransformed ? "" : "translate(0px, 200px)");
+});
+
+// Log messages with timestamp
+function logg(message) {
+    const date = new Date();
+    const timeString = `<pp style="color:rgb(160, 160, 160)">(${date.getHours()}:${date.getMinutes()}:${date.getSeconds()})</pp> ${message}`;
+    const log = document.createElement("p");
+    log.innerHTML = timeString;
+    document.getElementById("content").prepend(log);
+}
+
+// Initialize peer for sending and receiving messages
+function initializePeer() {
+    userpacket.username = document.getElementById("username").value; // Capture the username here
+    document.getElementById("overlay").innerHTML = "<h1>Loading...</h1>";
+    peer = new Peer(null, { debug: 2 });
+
+    peer.on('open', function (id) {
+        logg('Peer ID: ' + (peer.id || lastPeerId));
+        displayMessage('Your peer ID: ' + (peer.id || lastPeerId), 'system');
+        displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'system');
+        if (peer.id === null) peer.id = lastPeerId; // Handle null peer ID
+        $("#overlay").css("display", "none");
+        $("#overlay").css("position", "fixed");
+        $("#overlay").css("left", "-70000px");
+        $("#overlay").css("top", "-70000px");
+        $("#overlay").css("z-index", "-100");
+    });
+
+    // Handle incoming connections from remote peers
+    peer.on('connection', function (incomingConn) {
+        logg('Incoming connection from peer: ' + incomingConn.peer);
+        conn = incomingConn;  // Store the incoming connection globally
+        setupConnectionHandlers(conn);
+    });
+
+    peer.on('disconnected', function () {
+        displayMessage("Connection lost", 'system');
+        logg('Connection lost. Please reconnect');
+        peer.id = lastPeerId;
+        peer.reconnect();
+    });
+
+    peer.on('close', function () {
+        displayMessage('Connection destroyed', 'system');
+        logg("Connection destroyed. Please refresh");
+    });
+
+    peer.on('error', function (err) {
+        displayMessage('Error occurred, check logs', 'system');
+        logg('Error: ' + err);
+    });
+}
+
+// Set up handlers for an active connection
+function setupConnectionHandlers(connection) {
+    connection.on('open', function () {
+        conn.send(userpacket);
+        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
+        displayMessage('Connected to peer: ' + connection.peer, 'system');
+        listenForMessages(); // Start listening for incoming messages
+    });
+
+    connection.on('data', function (data) {
+        if (skib == false) {
+            skib = true;
+            otheruserpack = data;
+        } else {
+            logg('Received message: ' + data);  // Log the received message
+            displayMessage(data, 'other');      // Display the received message in the chat
         }
-                document.querySelector('#textbox').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-            pushh();
-            }
-        });
-        // Toggle log visibility
-        $(".collapsible").click(function() {
-            const isTransformed = $(this).css("transform") !== 'none';
-            $(this).css("transform", isTransformed ? "" : "translate(0px, 200px)");
-            $(".content").css("transform", isTransformed ? "" : "translate(0px, 200px)");
-        });
-    
-        // Log messages with timestamp
-        function logg(message) {
-            const date = new Date();
-            const timeString = `<pp style="color:rgb(160, 160, 160)">(${date.getHours()}:${date.getMinutes()}:${date.getSeconds()})</pp> ${message}`;
-            const log = document.createElement("p");
-            log.innerHTML = timeString;
-            document.getElementById("content").prepend(log);
-        }
-    
-        // Initialize peer for sending and receiving messages
-        function initializePeer() {
-            userpacket[username] = document.getElementById("username").value;
-            document.getElementById("overlay").innerHTML="<h1>Loading...</h1>";
-            peer = new Peer(null, { debug: 2 }); 
-    
-            peer.on('open', function(id) {
-                logg('Peer ID: ' + (peer.id || lastPeerId));
-                displayMessage('Your peer ID: ' + (peer.id || lastPeerId), 'system');
-                displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'system');
-                if (peer.id === null) peer.id = lastPeerId; // Handle null peer ID
-                $("#overlay").css("display","none");
-                $("#overlay").css("position","fixed");
-                $("#overlay").css("left","-70000px");
-                $("#overlay").css("top","-70000px");
-                $("#overlay").css("z-index","-100");
-            });
-    
-            // Handle incoming connections from remote peers
-            peer.on('connection', function(incomingConn) {
-                logg('Incoming connection from peer: ' + incomingConn.peer);
-                conn = incomingConn;  // Store the incoming connection globally
-                setupConnectionHandlers(conn);
-            });
-     
-            peer.on('disconnected', function() {
-                displayMessage("Connection lost", 'system');
-                logg('Connection lost. Please reconnect');
-                peer.id = lastPeerId;
-                peer.reconnect();
-            });
-    
-            peer.on('close', function() {
-                displayMessage('Connection destroyed','system');
-                logg("Connection destroyed. Please refresh");
-            });
-    
-            peer.on('error', function(err) {
-                displayMessage('Error occurred, check logs','system');
-                logg('Error: ' + err);
-            });
-        }
- // Store the data connection object globally
-    
-        // Set up handlers for an active connection
-        function setupConnectionHandlers(connection) {
-            connection.on('open', function() {
-                conn.send(userpacket);
-                logg('Connection established with peer: '+ otheruserpack[username] + '('+connection.peer+')');
-                displayMessage('Connected to peer: ' + connection.peer, 'system');
-                listenForMessages(); // Start listening for incoming messages
-                conn.send()
-            });
-    
-            connection.on('data', function(data) {
-                if(skib==false){
-                    skib=true;
-                    otheruserpack = data;
-                }else{
-                logg('Received message: ' + data);  // Log the received message
-                displayMessage(data, 'other');
-            }
-                      // Display the received message in the chat
-            });
-    
-            connection.on('error', function(err) {
-                logg('Connection error: ' + err);
-                displayMessage('Error occurred, check logs', 'system');
-            });
-    
-            connection.on('close', function() {
-                logg('Connection closed with peer: ' + connection.peer);
-                displayMessage('Connection closed with peer: ' + connection.peer, 'system');
-            });
-        }
-    
-        // Manually connect to a peer with the specified remote peer ID
-        function connectToPeer(remotePeerId) {
-            conn = peer.connect(remotePeerId);
-            setupConnectionHandlers(conn);  // Reuse the same connection handler
-        }
-        // Send a message to the connected peer
-        function pushh() {
-            const message = document.getElementById("textbox").value;
-            if (message != "" && conn && conn.open) {
-                conn.send(message); // Send message to peer
-                displayMessage(message, 'self'); // Display your own message
-            }else if(message != ""){
-                connectToPeer(message)
-            }else{
-            }
-            document.getElementById("textbox").value = ""; // Clear input
-        }
-    
-        // Display messages in the chat UI
-        function displayMessage(message, type) {
-            const newMsgCont = document.createElement("div");
-            const newMsg = document.createElement("div");
-    
-            if (type === 'self') {
-                newMsgCont.classList.add("chat-self");
-                newMsg.classList.add("chat-self-bubble");
-            } else if (type === 'other') {
-                newMsgCont.classList.add("chat-other");
-                newMsg.classList.add("chat-other-bubble");
-            } else if (type === 'system') {
-                newMsgCont.classList.add("chat-sys");
-                newMsg.classList.add("chat-sys-bubble");
-            }
-    
-            newMsg.innerHTML = message;
-            newMsgCont.appendChild(newMsg);
-            document.getElementById("chat").prepend(newMsgCont);
-        }
-    
-        
+    });
+
+    connection.on('error', function (err) {
+        logg('Connection error: ' + err);
+        displayMessage('Error occurred, check logs', 'system');
+    });
+
+    connection.on('close', function () {
+        logg('Connection closed with peer: ' + connection.peer);
+        displayMessage('Connection closed with peer: ' + connection.peer, 'system');
+    });
+}
+
+// Manually connect to a peer with the specified remote peer ID
+function connectToPeer(remotePeerId) {
+    conn = peer.connect(remotePeerId);
+    setupConnectionHandlers(conn);  // Reuse the same connection handler
+}
+
+// Send a message to the connected peer
+function pushh() {
+    const message = document.getElementById("textbox").value;
+    if (message != "" && conn && conn.open) {
+        const messageToSend = userpacket.username + ": " + message; // Add username before the message
+        conn.send(messageToSend); // Send message to peer
+        displayMessage(messageToSend, 'self'); // Display your own message with username
+    } else if (message != "") {
+        connectToPeer(message);
+    }
+    document.getElementById("textbox").value = ""; // Clear input
+}
+
+// Display messages in the chat UI
+function displayMessage(message, type) {
+    const newMsgCont = document.createElement("div");
+    const newMsg = document.createElement("div");
+
+    if (type === 'self') {
+        newMsgCont.classList.add("chat-self");
+        newMsg.classList.add("chat-self-bubble");
+    } else if (type === 'other') {
+        newMsgCont.classList.add("chat-other");
+        newMsg.classList.add("chat-other-bubble");
+    } else if (type === 'system') {
+        newMsgCont.classList.add("chat-sys");
+        newMsg.classList.add("chat-sys-bubble");
+    }
+
+    newMsg.innerHTML = DOMPurify.sanitize(message); // Ensure messages are sanitized
+    newMsgCont.appendChild(newMsg);
+    document.getElementById("chat").prepend(newMsgCont);
+}
+
     </script>
     
   
