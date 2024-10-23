@@ -127,15 +127,14 @@ function initializePeer() {
 function setupConnectionHandlers(connection) {
     connection.on('open', function () {
         conn.send(userpacket);
-        listenForMessages(); // Start listening for incoming messages
-        logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
-        displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'system');
     });
 
     connection.on('data', function (data) {
         if (skib == false) {
             skib = true;
             otheruserpack = data;
+            logg('Connection established with peer: ' + otheruserpack.username + ' (' + connection.peer + ')');
+        displayMessage('Connected to peer: ' + otheruserpack.username + ' (' + connection.peer + ')', 'system');
         } else {
             logg('Received message: ' + data);  // Log the received message
             displayMessage(data, 'other');      // Display the received message in the chat
