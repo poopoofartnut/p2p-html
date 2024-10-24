@@ -42,6 +42,110 @@
     var crypt;
     var privateKey;
     var publicKey;
+    function updateChatColors(baseColor) {
+        // Define the primary and secondary colors based on the base color
+        const primaryColor = baseColor;
+        const secondaryColor = blendColor(baseColor, '#4a4aff', 0.5); // Adjust as needed
+
+        // Update CSS variables
+        document.documentElement.style.setProperty('--primary-color', primaryColor);
+
+        // Update the background gradient
+        applyGradient(primaryColor);
+    }
+
+    function applyGradient(baseColor) {
+        const darkerBaseColor = darkenColor(baseColor, 0.7); // Darker version of the base color
+        const middleColor = getCloseColorShade(baseColor); // Get a close shade of the base color
+
+        document.body.style.background = `linear-gradient(39deg, black 0%, ${middleColor} 50%, ${darkerBaseColor} 100%)`;
+    }
+
+    function getCloseColorShade(baseColor) {
+        // Adjust the color slightly on the color wheel
+        const hsl = hexToHSL(baseColor);
+        const adjustedHue = (hsl[0] - 50) % 360; // Shift hue slightly (adjust value for more or less shift)
+        const newColor = HSLToHex(adjustedHue, hsl[1], hsl[2]); // Convert back to hex
+        return darkenColor(newColor, 0.7); // Darken the adjusted color for harmony
+    }
+
+    function hexToHSL(hex) {
+        let r = parseInt(hex.slice(1, 3), 16) / 255;
+        let g = parseInt(hex.slice(3, 5), 16) / 255;
+        let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    }
+
+    function HSLToHex(h, s, l) {
+        let r, g, b;
+
+        h /= 360;
+        s /= 100;
+        l /= 100;
+
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const hue2RGB = function hue2RGB(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            }
+
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2RGB(p, q, h + 1 / 3);
+            g = hue2RGB(p, q, h);
+            b = hue2RGB(p, q, h - 1 / 3);
+        }
+
+        return `#${((1 << 24) + (Math.round(r * 255) << 16) + (Math.round(g * 255) << 8) + Math.round(b * 255)).toString(16).slice(1)}`;
+    }
+
+    function blendColor(color1, color2, percentage) {
+        const f = parseInt(color1.slice(1), 16);
+        const t = parseInt(color2.slice(1), 16);
+        const R1 = f >> 16;
+        const G1 = (f >> 8) & 0x00FF;
+        const B1 = f & 0x0000FF;
+        const R2 = t >> 16;
+        const G2 = (t >> 8) & 0x00FF;
+        const B2 = t & 0x0000FF;
+        const R = Math.round(R1 + percentage * (R2 - R1));
+        const G = Math.round(G1 + percentage * (G2 - G1));
+        const B = Math.round(B1 + percentage * (B2 - B1));
+        return `#${(0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1)}`;
+    }
+
+    function darkenColor(color, factor) {
+        const f = parseInt(color.slice(1), 16);
+        const R = Math.max((f >> 16) - Math.round(255 * factor), 0);
+        const G = Math.max(((f >> 8) & 0x00FF) - Math.round(255 * factor), 0);
+        const B = Math.max((f & 0x0000FF) - Math.round(255 * factor), 0);
+        return `#${(0x1000000 + (R << 16) + (G << 8) + B).toString(16).slice(1)}`;
+    }
+
+    updateChatColors('#3366ff');
 
     function generateKeypair() {
         try {
@@ -218,22 +322,24 @@
         newMsgCont.appendChild(newMsg);
         document.getElementById("chat").prepend(newMsgCont);
     }
-  </script>
+    
+</script>
 
   <style>
     :root {
-      --bg-color: #1e1e1e;
+      --bg-color: rgb(31, 31, 31);
       --text-color: #e0e0e0;
-      --primary-color: #4a4aff;
-      --secondary-color: #2c2c2c;
+      --primary-color: black;
+      --secondary-color: #474747;
       --tertiary-color: #3a3a3a;
       --system-message-color: #a0a0a0;
       --scrollbar-thumb-color: #555555;
       --scrollbar-thumb-hover-color: #777777;
+      --gradiant-mid-color: #015b82;
     }
 
     body {
-        background-color: var(--bg-color);
+        background: linear-gradient(24deg, #000000 0%, #012635 50%, #212163 100%); /* Darkened gradient colors */
         color: var(--text-color);
         font-family: Arial, sans-serif;
 
@@ -243,6 +349,7 @@
         display: flex;
         flex-direction: column;
     }
+
 
     h1 {
         font-size: 24px;
@@ -277,7 +384,7 @@
 
     .chat-self-bubble {
         background-color: var(--primary-color);
-        color: var(--bg-color);
+        color: var(--font-color);
         padding: 10px;
         border-radius: 20px;
         border-bottom-right-radius: 5px;
@@ -303,6 +410,7 @@
         display: flex;
         padding: 20px;
         background-color: var(--tertiary-color);
+        outline: none;
     }
 
     .textbox {
@@ -314,6 +422,7 @@
         border-radius: 20px;
         margin-right: 10px;
         font-size: 16px;
+        outline: none;
     }
 
     #send {
@@ -378,6 +487,7 @@
         padding: 40px;
         border-radius: 20px;
         text-align: center;
+        outline: none;
     }
 
     .done {
