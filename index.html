@@ -26,7 +26,7 @@
       <div id="user">
           <h1>Encrypted Peer-to-peer Messaging</h1>
           <input id="username" type="text" class="textbox" placeholder="Username" value="">
-          <button class="done" onclick="initializePeer();">Start Chatting</button>
+          <button class="done" onclick="initializePeer();">Start</button>
       </div>
   </div>
 
@@ -210,7 +210,7 @@
             return;
         }
         userpacket.username = username;
-        document.getElementById("overlay").innerHTML = "<h1>Connecting...</h1>";
+        document.getElementById("overlay").innerHTML = "<h1>Loading...</h1>";
         peer = new Peer(null, { debug: 2 });
 
         peer.on('open', function (id) {
@@ -224,7 +224,9 @@
         peer.on('connection', function (incomingConn) {
             logg('Incoming connection from peer: ' + incomingConn.peer);
             conn = incomingConn;
-            setupConnectionHandlers(conn);
+            if (confirm("Do you want to accept messages from "+ conn) == true) {
+                setupConnectionHandlers(conn);
+            }
         });
 
         peer.on('disconnected', function () {
