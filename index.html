@@ -308,7 +308,10 @@
         } else if (!conn) {
             connectToPeer(message);
         } else {
-            displayMessage('Connection not open. Message not sent.', 'sys');
+            skib = false;
+            conn = null;
+            connectToPeer(message);
+            
         }
         document.getElementById("textbox").value = "";
     }
