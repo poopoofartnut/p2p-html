@@ -12,7 +12,21 @@
 </head>
 <body>
   <button type="button" class="collapsible">Toggle logs</button>
-
+  <button type="button" id="settingsButton">Settings</button>
+  <div id="settingsOverlay" class="overlay">
+    <div class="overlay-content">
+      <h2>Settings</h2>
+      <div class="setting-item">
+        <label for="changeUsername">Change Username:</label>
+        <input type="text" id="changeUsername" class="textbox">
+        <button class="button" style="margin-top: 5px;" onclick="changeUsername()">Update</button>
+      </div>
+      <div class="setting-item">
+        <button class="button" style="margin-top: -5px;" onclick="exportKeys()">Export Encryption Keys</button>
+      </div>
+      <button onclick="closeSettings()" class="close-button">Close</button>
+    </div>
+  </div>
   <div class="content" id="content">
   </div>
 
@@ -31,12 +45,57 @@
   </div>
 
   <script>
+    const socket = io('https://vigilant-space-acorn-pjprxjwjqv7p3rgjx-3000.app.github.dev/');
+    document.getElementById('settingsButton').addEventListener('click', openSettings);
+
+function openSettings() {
+  document.getElementById('settingsOverlay').style.display = 'flex';
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').style.display = 'none';
+}
+
+function changeUsername() {
+  const newUsername = document.getElementById('changeUsername').value.trim();
+  if (newUsername) {
+    userpacket.username = newUsername;
+    displayMessage('Username changed to: ' + newUsername, 'sys');
+    logg('Username changed to: ' + newUsername);
+    document.getElementById('changeUsername').value = '';
+  } else {
+    alert('Please enter a valid username.');
+  }
+}
+
+function exportKeys() {
+  if (privateKey && publicKey) {
+    const keys = {
+      privateKey: privateKey,
+      publicKey: publicKey
+    };
+    const blob = new Blob([JSON.stringify(keys, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'encryption_keys.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    displayMessage('Encryption keys exported successfully.', 'sys');
+    logg('Encryption keys exported.');
+  } else {
+    alert('Encryption keys are not available. Please ensure you are connected to a peer.');
+  }
+}
     var otheruserpack;
     let conn = null;
     var skib = false;
     var userpacket = {
         "username": "",
-        "publicKey": ""
+        "publicKey": "",
+        "userId": ""
     }
 
     var crypt;
@@ -214,6 +273,7 @@
         peer = new Peer(null, { debug: 2 });
 
         peer.on('open', function (id) {
+            userpacket.userId = peer.id;
             logg('Peer ID: ' + (peer.id || lastPeerId));
             displayMessage('Your peer ID: ' + (peer.id || lastPeerId), 'sys');
             displayMessage('To connect to a peer, type their peer ID into the message box and press send or Return', 'sys');
@@ -244,7 +304,7 @@
         peer.on('error', function (err) {
             displayMessage('Error occurred: ' + err.type, 'sys');
             logg('Error: ' + err.type);
-        });
+        }); 
     }
 
     function setupConnectionHandlers(connection) {
@@ -328,6 +388,21 @@
         document.getElementById("chat").prepend(newMsgCont);
     }
     
+    // Send user data when connected
+socket.on('connect', () => {
+    logg('Connected to server');
+    socket.emit('user_connect', userpacket);
+});
+
+// Handle errors
+socket.on('error', (error) => {
+    console.error('Server error:', error);
+});
+
+// Handle disconnection
+socket.on('disconnect', () => {
+    console.log('Disconnected from server');
+});
 </script>
 
   <style>
@@ -361,7 +436,66 @@
         text-align: center;
         margin-bottom: 20px;
     }
+    .overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
+.overlay-content {
+  background-color: var(--tertiary-color);
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 5px;
+}
+#settingsButton{
+    position: fixed;
+    top: -10px;
+    right: 5px;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+.close-button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+}
+.button{
+    background-color: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px;
+}
     #chat {
         flex: 1;
         overflow-y: auto;
@@ -530,4 +664,4 @@
     }
   </style>
 </body>
-</html>
+</html>  
