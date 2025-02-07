@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.0.0/jsencrypt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
     <title>Encrypted P2P Chat</title>
 </head>
 <body>
@@ -394,15 +395,20 @@ socket.on('connect', () => {
     socket.emit('user_connect', userpacket);
 });
 
-// Handle errors
-socket.on('error', (error) => {
-    console.error('Server error:', error);
-});
+socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+    logg('Connection error: ' + error.message);
+  });
 
-// Handle disconnection
-socket.on('disconnect', () => {
-    console.log('Disconnected from server');
-});
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+    logg('Socket error: ' + error);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Disconnected from server:', reason);
+    logg('Disconnected from server: ' + reason);
+  });
 </script>
 
   <style>
