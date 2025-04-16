@@ -46,7 +46,7 @@
   </div>
 
   <script>
-    const socket = io('https://vigilant-space-acorn-pjprxjwjqv7p3rgjx-3000.app.github.dev/');
+    
     document.getElementById('settingsButton').addEventListener('click', openSettings);
 
 function openSettings() {
@@ -388,27 +388,7 @@ function exportKeys() {
         newMsgCont.appendChild(newMsg);
         document.getElementById("chat").prepend(newMsgCont);
     }
-    
-    // Send user data when connected
-socket.on('connect', () => {
-    logg('Connected to server');
-    socket.emit('user_connect', userpacket);
-});
-
-socket.on('connect_error', (error) => {
-    console.error('Connection error:', error);
-    logg('Connection error: ' + error.message);
-  });
-
-  socket.on('error', (error) => {
-    console.error('Socket error:', error);
-    logg('Socket error: ' + error);
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log('Disconnected from server:', reason);
-    logg('Disconnected from server: ' + reason);
-  });
+   
 </script>
 
   <style>
